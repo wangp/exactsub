@@ -6,12 +6,17 @@
 ** there are no special characters.
 */
 
-extern crate memmem;
-
 use std::io;
 use std::io::{Read, Write};
 use std::process;
-use memmem::{Searcher, TwoWaySearcher};
+
+extern crate libc;
+use libc::size_t;
+
+extern {
+    fn memmem(haystack: *const u8, haystacklen: size_t,
+              needle: *const u8, needlelen: size_t) -> *const u8;
+}
 
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
@@ -54,8 +59,6 @@ fn exactsubst(from: &[u8], to: &[u8], inp: &mut Read, out: &mut Write) -> u32 {
 
     let mut buf: Vec<u8> = vec![0; choosecap];
     let mut buf_len = 0;
-
-    let search = TwoWaySearcher::new(from);
     let mut occurs = 0;
 
     loop {
@@ -69,7 +72,7 @@ fn exactsubst(from: &[u8], to: &[u8], inp: &mut Read, out: &mut Write) -> u32 {
             let mut start = 0;
 
             loop {
-                match search.search_in(&buf[start..buf_len]) {
+                match safe_memmem(&buf[start..buf_len], from) {
                     None =>
                         break,
                     Some(k) => {
@@ -135,4 +138,16 @@ fn shift(buf: &mut [u8], start: usize, end: usize) -> usize {
         buf[i-start] = buf[i];
     }
     return end - start;
+}
+
+fn safe_memmem(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    unsafe {
+        let r = memmem(haystack.as_ptr(), haystack.len(),
+                        needle.as_ptr(), needle.len());
+        if r.is_null() {
+            None
+        } else {
+            Some(r as usize - haystack.as_ptr() as usize)
+        }
+    }
 }
