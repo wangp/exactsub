@@ -1,0 +1,7 @@
+[package]
+name = "exactsub"
+version = "0.1.0"
+authors = ["tjaden"]
+
+[dependencies]
+    memmem = "0.1.1"
