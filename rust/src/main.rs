@@ -48,7 +48,7 @@ fn exactsubst(from: &[u8], to: &[u8], inp: &mut Read, out: &mut Write) -> u32 {
         return exactsubst0(to, inp, out);
     }
 
-    const MINBUFCAP : usize = 1024;
+    const MINBUFCAP : usize = 4096;
     let choosecap =
         if from.len() < MINBUFCAP {
             MINBUFCAP
